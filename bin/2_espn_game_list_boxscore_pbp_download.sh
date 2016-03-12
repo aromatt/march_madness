@@ -1,28 +1,30 @@
 set -e
 
+: INTERVAL=${INTERVAL:=30}
+
 valid_boxscores=../data/valid_boxscores.tsv
 invalid_boxscores=../data/invalid_boxscores.tsv
 valid_playbyplays=../data/valid_playbyplays.tsv
 invalid_playbyplays=../data/invalid_playbyplays.tsv
 
-cat ../data/game_list_*.tsv | sort | uniq | while read line
+cat ../data/game_list_*.tsv | sort | uniq | while read game_id
 do
-  boxscore=../data/boxscore_$line.html
-  playbyplay=../data/playbyplay_$line.html
-  boxscore_parsed=../data/boxscore_$line.tsv
-  playbyplay_parsed=../data/playbyplay_$line.tsv
+  boxscore=../data/boxscore_$game_id.html
+  playbyplay=../data/playbyplay_$game_id.html
+  boxscore_parsed=../data/boxscore_$game_id.tsv
+  playbyplay_parsed=../data/playbyplay_$game_id.tsv
 
   if [ ! -f $boxscore ] && [ "$1" != "--nodl" ]
   then
-    curl -s -S "http://espn.go.com/mens-college-basketball/boxscore?gameId=$line" > $boxscore
+    curl -s -S "http://espn.go.com/mens-college-basketball/boxscore?gameId=$game_id" > $boxscore
     echo "Downloaded $boxscore"
-    sleep 30
+    sleep $INTERVAL
   fi
   if [ ! -f $playbyplay ] && [ "$1" != "--nodl" ]
   then
-    curl -s -S "http://espn.go.com/mens-college-basketball/playbyplay?gameId=$line" > $playbyplay
+    curl -s -S "http://espn.go.com/mens-college-basketball/playbyplay?gameId=$game_id" > $playbyplay
     echo "Downloaded $playbyplay"
-    sleep 30
+    sleep $INTERVAL
   fi
 
   if [ ! -f $boxscore_parsed ]
@@ -50,10 +52,10 @@ do
     if [ $event_count -eq 0 ]
     then
       echo "*Retrieved no events from $boxscore_parsed"
-      echo "$line" >> $invalid_boxscores
+      echo "$game_id" >> $invalid_boxscores
     else
       echo "Retrieved $event_count events from $boxscore_parsed"
-      echo "$line" >> $valid_boxscores
+      echo "$game_id" >> $valid_boxscores
     fi
   fi
 
@@ -70,10 +72,10 @@ do
     if [ $event_count -eq 0 ]
     then
       echo "*Retrieved no events from $playbyplay_parsed"
-      echo "$line" >> $invalid_playbyplays
+      echo "$game_id" >> $invalid_playbyplays
     else
       echo "Retrieved $event_count events from $playbyplay_parsed"
-      echo "$line" >> $valid_playbyplays
+      echo "$game_id" >> $valid_playbyplays
     fi
   fi
 done

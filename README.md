@@ -19,7 +19,7 @@ The scope of this project includes tools for:
 ### Scraping for tokens in a file
 
 Given a file that contains data that can be found with regular expressions,
-use the `./bin/scrape.rb` tool finding the tokens and outputting them in tab-
+use the `./bin/scrape.rb` tool finding the tokens and output them in tab-
 delimited format to stdout. Note that this could be done with a combination
 of `grep` and `sed` to the same effect.
 
@@ -47,7 +47,7 @@ curl `http://example.com/teams > teams.html`
 
 ### Download the schedule from each of the teams
 
-`cat team_ids.tsv | while read line; do curl "http://example.com/team/schedule/id/$line" > schedules_$line.html; sleep 60; done`
+`cat team_ids.tsv | while read team_id; do curl "http://example.com/team/schedule/id/$team_id" > schedules_$team_id.html; sleep 10; done`
 
 ### Get the game IDs from each of the teams' schedules
 
@@ -55,8 +55,8 @@ curl `http://example.com/teams > teams.html`
 
 ### Download all of the boxscores and play-by-play pages
 
-`cat game_list_*.tsv | sort | uniq | while read line; do curl "http://example.com/boxscore?gameId=$line" > boxscore_$line.html; sleep 60; curl "http://example.com/playbyplay?gameId=$line" > playbyplay_$line.html; sleep 60; done`
+`cat game_list_*.tsv | sort | uniq | while read line; do curl "http://example.com/boxscore?gameId=$line" > boxscore_$line.html; sleep 10; curl "http://example.com/playbyplay?gameId=$line" > playbyplay_$line.html; sleep 10; done`
 
 Note: to skip files that have already been downloaded, use the following:
 
-`cat game_list_*.tsv | sort | uniq | while read line; do if [ ! -f boxscore_$line.html ]; then curl "http://example.com/boxscore?gameId=$line" > boxscore_$line.html; sleep 30; fi; if [ ! -f playbyplay_$line.html ]; then curl "http://example.com/playbyplay?gameId=$line" > playbyplay_$line.html; sleep 30; fi; done`
+`cat game_list_*.tsv | sort | uniq | while read line; do if [ ! -f boxscore_$line.html ]; then curl "http://example.com/boxscore?gameId=$line" > boxscore_$line.html; sleep 10; fi; if [ ! -f playbyplay_$line.html ]; then curl "http://example.com/playbyplay?gameId=$line" > playbyplay_$line.html; sleep 10; fi; done`
