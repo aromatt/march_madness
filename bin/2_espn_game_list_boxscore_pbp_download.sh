@@ -1,18 +1,19 @@
 set -e
 
+root_dir=$(cd `dirname $0`/.. && pwd)
 : INTERVAL=${INTERVAL:=30}
 
-valid_boxscores=../data/valid_boxscores.tsv
-invalid_boxscores=../data/invalid_boxscores.tsv
-valid_playbyplays=../data/valid_playbyplays.tsv
-invalid_playbyplays=../data/invalid_playbyplays.tsv
+valid_boxscores=$root_dir/data/valid_boxscores.tsv
+invalid_boxscores=$root_dir/data/invalid_boxscores.tsv
+valid_playbyplays=$root_dir/data/valid_playbyplays.tsv
+invalid_playbyplays=$root_dir/data/invalid_playbyplays.tsv
 
-cat ../data/game_list_*.tsv | sort | uniq | while read game_id
+cat $root_dir/data/game_list_*.tsv | sort | uniq | while read game_id
 do
-  boxscore=../data/boxscore_$game_id.html
-  playbyplay=../data/playbyplay_$game_id.html
-  boxscore_parsed=../data/boxscore_$game_id.tsv
-  playbyplay_parsed=../data/playbyplay_$game_id.tsv
+  boxscore=$root_dir/data/boxscore_$game_id.html
+  playbyplay=$root_dir/data/playbyplay_$game_id.html
+  boxscore_parsed=$root_dir/data/boxscore_$game_id.tsv
+  playbyplay_parsed=$root_dir/data/playbyplay_$game_id.tsv
 
   if [ ! -f $boxscore ] && [ "$1" != "--nodl" ]
   then
