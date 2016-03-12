@@ -62,10 +62,12 @@ do
 
   if [ ! -f $playbyplay_parsed ]
   then
-    regex="<tr class=\"(?:even|odd)\"><td[^>]*>(?<time>[^<]*)</td>"
-    regex="$regex<td[^>]*>(?:<b>|<B>)?(?:&nbsp;)?(?<team_a_action>[^<]*)(?:</b>|</B>)?</td>"
-    regex="$regex<td[^>]*>(?<score>[^<]*)</td>"
-    regex="$regex<td[^>]*>(?:<b>|<B>)?(?:&nbsp;)?(?<team_b_action>[^<]*)(?:</b>|</B>)?</td></tr>"
+    regex="<tr>"
+    regex="$regex<td[^>]*>(?<time-stamp>[0-9:]*)?</td>"
+    regex="$regex<td[^>]*>(:?\<img[^>]*>)?</td>"
+    regex="$regex<td[^>]*>(?<game-details>[^>]*)?</td>"
+    regex="$regex<td[^>]*>(?<new-score>[^>]*)?</td>"
+    regex="$regex<td[^>]*>[^>]*</td></tr>"
 
     # find named instances of the given regex
     ./scrape.rb $playbyplay "$regex" --headers > $playbyplay_parsed
