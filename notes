@@ -1,0 +1,49 @@
+# TODO
+
+- Need to do some weighting/normalization.
+- Need to ensure consistent row (team) indexing (small enough to just use a dictionary)
+- Get post-SVD team vectors
+- Build games lookup table:
+  - 2*N dimensional space where N length of post-SVD team vectors.
+  - For each game concatenate team A vector with team B and label the point with the score difference
+    - Don't forget to create a sister point, swapping the teams and inverting the label
+
+- Evaluate by splitting data into lookup table and test data.
+
+# Dependencies
+  ruby
+  python
+    numpy
+    scipy
+    sparsesvd
+
+  # NYI
+  scikit-cuda (and CUDA)
+    - make sure LD_LIBRARY_PATH includes cuda include dirs, and that PATH includes cuda bin dirs
+    - if pycuda fails to install complaining about not being able to find cuda.h, it might actually
+      be that the cuda bin dir is not in your PATH.
+
+
+# Instructions
+
+  # Install python deps (use virtualenv to keep it isolated)
+
+  $ cd march_madness
+
+  # Collect data:
+  # run ./bin scripts 0_*, 1_* and 2_* (2 can take hours because of sleeping in between HTTP queries)
+
+  # Extract event tuples (takes ~1 minute):
+  $ cat data/playbyplay*.tsv | ./bin/extract_event_tuples.rb > stat/tuples.json 2>stat/agg_tuples.txt
+
+  # Perform SVD on event tuples matrix
+  cat stat/tuples.json | ./bin/svd.py
+
+
+# Observations
+Tuples:
+  with 1s, 2s, and 3s, only 10.6K unique event tuples
+Memory:
+  There is a trade-off between column hash space and singular value count (SVD truncation)
+  Local box can only ever do up to 20 bit column hash space.
+  At 20 bits, can keep up to about 300 SVs. (there's only one per team, anyway)
