@@ -64,7 +64,7 @@ do
   then
     regex="<tr>"
     regex="$regex<td[^>]*>(?<time-stamp>[0-9:]*)?</td>"
-    regex="$regex<td[^>]*>(:?\<img[^>]*>)?</td>"
+    regex="$regex<td[^>]*><img class=\"team-logo\" src=\"[^\"]+ncaa\/[0-9]*\/(?<team-id>[0-9]+)?\.png[^>]*\"/></td>"
     regex="$regex<td[^>]*>(?<game-details>[^>]*)?</td>"
     regex="$regex<td[^>]*>(?<new-score>[^>]*)?</td>"
     regex="$regex<td[^>]*>[^>]*</td></tr>"
