@@ -18,9 +18,10 @@ require 'json'
 SINGLE = true
 DOUBLE = true
 TRIPLE = true
-QUAD = true
-PENT = true
-SIX = true
+QUAD =   true
+PENT =   true
+SIX =    true
+SEVEN =  true
 
 events = {
   missed_jumper: {
@@ -70,6 +71,8 @@ ARGV.each do |file|
   last_team_3 = nil
   last_event_4 = nil
   last_team_4 = nil
+  last_event_5 = nil
+  last_team_5 = nil
 
   File.open(file, 'r') do |f|
     lines = f.readlines
@@ -136,21 +139,32 @@ ARGV.each do |file|
                     unique_events[pent_event] += 1
                   end
 
-                # 6-tuple
-                if last_event_4 && last_team_4
-                  prefix = (team == last_team_4 ? 'i' : 'u')
-                  six_event = "#{prefix}_#{last_event_4}_" + pent_event
-                  if PENT
-                    agg[team][six_event] += 1
-                    unique_events[six_event] += 1
-                  end
-                end
+                  # 6-tuple
+                  if last_event_4 && last_team_4
+                    prefix = (team == last_team_4 ? 'i' : 'u')
+                    six_event = "#{prefix}_#{last_event_4}_" + pent_event
+                    if SIX
+                      agg[team][six_event] += 1
+                      unique_events[six_event] += 1
+                    end
 
+                    # 7-tuple
+                    if last_event_5 && last_team_5
+                      prefix = (team == last_team_5 ? 'i' : 'u')
+                      seven_event = "#{prefix}_#{last_event_5}_" + six_event
+                      if SEVEN
+                        agg[team][seven_event] += 1
+                        unique_events[seven_event] += 1
+                      end
+                    end
+                  end
                 end
               end
             end
           end
         end
+        last_event_5 = last_event_4
+        last_team_5 = last_team_4
         last_event_4 = last_event_3
         last_team_4 = last_team_3
         last_event_3 = last_event_2

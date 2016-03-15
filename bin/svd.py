@@ -16,13 +16,20 @@ import operator
 TEAM_INDEX_PATH = dirname(__file__) + "/../stat/teams.index"
 GAME_OUTCOMES_PATH = dirname(__file__) + "/../stat/game_outcomes.json"
 
-USE_HASH = False
-HASH_SPACE = 1 << 16
-WEIGHT_GATE = 0       # 0 seems to be best
-NEIGHBORS = 20
+TRAIN_SPLIT = 0.75
 
-# highest accuracy was seen with a value of ~2-4, but also maybe more features -> more SVs
-KEEP_SV = 2
+USE_HASH = True
+HASH_SPACE = 1 << 21
+
+WEIGHT_GATE = 0           # 0 seems to be best? actually 1 or 2
+WEIGHT_CEIL = 1000000
+WEIGHT_IGNORE = 10000000
+BINARY_WEIGHT = True      # True seems best
+
+NEIGHBORS = 20            # 20 was best
+
+# Highest accuracy was seen with a value of ~2-5, but also maybe more features -> more SVs?
+KEEP_SV = 5
 
 def build_team_index(path):
     team_array = open(path).read().split("\n")
@@ -55,31 +62,22 @@ for line in fileinput.input():
     team = int(obj['team'])
     vec = np.zeros(HASH_SPACE)
     for tuple_key, count in obj['tuples'].iteritems():
-        val = count # TODO weight
-        val = max(val - WEIGHT_GATE, 0) # TODO weight
-        #val = 1 if val > 0 else 0 # TODO weight
+        val = count
+        val = max(val - WEIGHT_GATE, WEIGHT_CEIL)
+        val = 0 if val > WEIGHT_IGNORE else val
+        if BINARY_WEIGHT:
+            val = 1 if val > 0 else 0
         vec[get_tuple_key(tuple_key)] = val
     team_features[team_index[team]] = vec
 print team_features.shape
 print team_features
 
-print "Normalizing matrix..."
-# TODO norm
-#for i in range(0, len(team_features)):
-#    row = team_features[i]
-#    s = max(sum(row)**2, 0.0001)
-#    team_features[i] = row / s
-# TODO norm
-#for i in range(0, len(team_features.T)):
-#    column = team_features.T[i]
-#    s = max(sum(column)**2, 0.0001)
-#    team_features[:,i] = column / s
-
+print "Normalizing matrix..." # TODO norm
 csc = csc_matrix(team_features)
-#normalize(csc, axis=0, copy=False) # TODO norm
-#normalize(csc, axis=1, copy=False) # TODO norm
-maxabs_scale(csc, axis=0, copy=False) # scale each feature TODO norm
-maxabs_scale(csc, axis=1, copy=False) # scale each team TODO norm
+#normalize(csc, axis=0, copy=False)
+#normalize(csc, axis=1, copy=False)
+maxabs_scale(csc, axis=0, copy=False) # scale each feature
+maxabs_scale(csc, axis=1, copy=False) # scale each team
 print csc.shape
 
 print "Computing SVD..."
@@ -104,11 +102,8 @@ for (i, game) in enumerate(games):
     w_vec = team_feat_dense[team_index[game['winner']]]
     l_vec = team_feat_dense[team_index[game['loser']]]
 
-    games_matrix[w_index] = np.concatenate([w_vec, l_vec]) # TODO concat
-    #games_matrix[w_index] = w_vec
-
-    games_matrix[l_index] = np.concatenate([l_vec, w_vec]) # TODO concat
-    #games_matrix[l_index] = l_vec
+    games_matrix[w_index] = np.concatenate([w_vec, l_vec])
+    games_matrix[l_index] = np.concatenate([l_vec, w_vec])
 
     regress_vec[w_index] = game['score_diff']
     regress_vec[l_index] = -game['score_diff']
@@ -122,7 +117,7 @@ print
 # http://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html
 print "Regression test..."
 games_train, games_test, regress_train, regress_test = train_test_split(
-        games_matrix, regress_vec, test_size=0.75)
+        games_matrix, regress_vec, test_size=TRAIN_SPLIT)
 
 n = KNeighborsRegressor(
         n_neighbors=NEIGHBORS,         # saw highest accuracy with 20
@@ -145,13 +140,13 @@ print
 
 print "Classification test..."
 games_train, games_test, class_train, class_test = train_test_split(
-        games_matrix, class_vec, test_size=0.75)
+        games_matrix, class_vec, test_size=TRAIN_SPLIT)
 n = KNeighborsClassifier(
-        n_neighbors=NEIGHBORS,         # saw highest accuracy with 20
+        n_neighbors=NEIGHBORS,
         algorithm='kd_tree',
         weights='uniform',      # saw highest accuracy with uniform
         #weights='distance',
-        #metric='minkowski', p=2,
+        #metric='minkowski', p=1,
         n_jobs = 3, # number of CPU cores (-1 for all)
         )
 

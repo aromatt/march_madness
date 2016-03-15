@@ -1,14 +1,14 @@
 # TODO
-
 DONE - Need to do some weighting/normalization.
-- Need to ensure consistent row (team) indexing (small enough to just use a dictionary)
-- Get post-SVD team vectors
-- Build games lookup table:
+DONE - Need to ensure consistent row (team) indexing (small enough to just use a dictionary)
+DONE - Get post-SVD team vectors
+DONE - Build games lookup table:
   - 2*N dimensional space where N length of post-SVD team vectors.
   - For each game concatenate team A vector with team B and label the point with the score difference
     - Don't forget to create a sister point, swapping the teams and inverting the label
 
-- Evaluate by splitting data into lookup table and test data.
+DONE - Evaluate by splitting data into lookup table and test data.
+- qualify events with time bucket
 
 # Dependencies
   ruby
@@ -51,7 +51,8 @@ Memory:
 
 Higher Accuracy with:
   Binary weights, normalized with max_abs_scale
-  Longer tuples.
+  Longer tuples? Not so sure after bug. Only in combo with short tuples...
+    there seems to be a sweet spot around 1 + 2 + 3
   Fewer SVs.
   Uniform KNN weighting
   ~20 neighbors
