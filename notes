@@ -35,7 +35,7 @@ DONE - Need to do some weighting/normalization.
   # run ./bin scripts 0_*, 1_* and 2_* (2 can take hours because of sleeping in between HTTP queries)
 
   # Extract event tuples (takes ~1-2 minutes):
-  $ ./bin/extract_event_tuples.rb data/playbyplay*.tsv > 1>stat/tuples.json 2>stat/agg_tuples.txt
+  $ ./bin/extract_event_tuples.rb data/playbyplay*.tsv > 1>stat/tuples.json 2>stat/tuple_stats.txt
 
   # Perform SVD on event tuples matrix
   cat stat/tuples.json | ./bin/svd.py
@@ -43,7 +43,7 @@ DONE - Need to do some weighting/normalization.
 
 # Observations
 Tuples:
-  with 1s, 2s, and 3s, only 10.6K unique event tuples
+  with double, triple, and quad event tuples --> 31K tuple types
 Memory:
   There is a trade-off between column hash space and singular value count (SVD truncation)
   Local box can only ever do up to 20 bit column hash space.

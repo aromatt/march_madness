@@ -16,9 +16,10 @@ require 'json'
 # }
 
 SINGLE = false
-DOUBLE = true
-TRIPLE = true
+DOUBLE = false
+TRIPLE = false
 QUAD = true
+PENT = true
 
 events = {
   missed_jumper: {
@@ -64,6 +65,8 @@ ARGV.each do |file|
   last_team_1 = nil
   last_event_2 = nil
   last_team_2 = nil
+  last_event_3 = nil
+  last_team_3 = nil
 
   File.open(file, 'r') do |f|
     lines = f.readlines
@@ -86,7 +89,7 @@ ARGV.each do |file|
 
       if event
         teams.keys.each do |team|
-          # single
+          # 1-tuple
           prefix = (team == acting_team ? 'i' : 'u')
           single_event = "#{prefix}_#{event}"
           if SINGLE
@@ -94,7 +97,7 @@ ARGV.each do |file|
             unique_events[single_event] += 1
           end
 
-          # double
+          # 2-tuple
           if last_event && last_team
             prefix = (team == last_team ? 'i' : 'u')
             double_event = "#{prefix}_#{last_event}_" + single_event
@@ -103,7 +106,7 @@ ARGV.each do |file|
               unique_events[double_event] += 1
             end
 
-            # triple
+            # 3-tuple
             if last_event_1 && last_team_1
               prefix = (team == last_team_1 ? 'i' : 'u')
               triple_event = "#{prefix}_#{last_event_1}_" + double_event
@@ -112,7 +115,7 @@ ARGV.each do |file|
                 unique_events[triple_event] += 1
               end
 
-              # quadruple
+              # 4-tuple
               if last_event_2 && last_team_2
                 prefix = (team == last_team_2 ? 'i' : 'u')
                 quad_event = "#{prefix}_#{last_event_2}_" + triple_event
@@ -120,10 +123,22 @@ ARGV.each do |file|
                   agg[team][quad_event] += 1
                   unique_events[quad_event] += 1
                 end
+
+                # 5-tuple
+                if last_event_3 && last_team_3
+                  prefix = (team == last_team_3 ? 'i' : 'u')
+                  pent_event = "#{prefix}_#{last_event_3}_" + quad_event
+                  if PENT
+                    agg[team][pent_event] += 1
+                    unique_events[pent_event] += 1
+                  end
+                end
               end
             end
           end
         end
+        last_event_3 = last_event
+        last_team_3 = last_team
         last_event_2 = last_event
         last_team_2 = last_team
         last_event_1 = last_event
