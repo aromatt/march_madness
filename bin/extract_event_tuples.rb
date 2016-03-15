@@ -15,6 +15,11 @@ require 'json'
 #   }
 # }
 
+SINGLE = false
+DOUBLE = true
+TRIPLE = true
+QUAD = true
+
 events = {
   missed_jumper: {
     regex: /missed (Jumper|Two Point Tip Shot)/,
@@ -57,11 +62,13 @@ ARGV.each do |file|
   last_team = nil
   last_event_1 = nil
   last_team_1 = nil
+  last_event_2 = nil
+  last_team_2 = nil
 
   File.open(file, 'r') do |f|
     lines = f.readlines
 
-    # Need to determine both teams before iterating over lines.
+    # TODO Need to determine both teams before iterating over lines.
     # Skip file unless we have two teams (sometimes they are missing)
     lines.each do |line|
       team = line.split("\t")[2].to_i
@@ -82,25 +89,43 @@ ARGV.each do |file|
           # single
           prefix = (team == acting_team ? 'i' : 'u')
           single_event = "#{prefix}_#{event}"
-          agg[team][single_event] += 1
-          unique_events[single_event] += 1
+          if SINGLE
+            agg[team][single_event] += 1
+            unique_events[single_event] += 1
+          end
 
           # double
           if last_event && last_team
             prefix = (team == last_team ? 'i' : 'u')
             double_event = "#{prefix}_#{last_event}_" + single_event
-            agg[team][double_event] += 1
-            unique_events[double_event] += 1
+            if DOUBLE
+              agg[team][double_event] += 1
+              unique_events[double_event] += 1
+            end
 
             # triple
             if last_event_1 && last_team_1
               prefix = (team == last_team_1 ? 'i' : 'u')
               triple_event = "#{prefix}_#{last_event_1}_" + double_event
-              agg[team][triple_event] += 1
-              unique_events[triple_event] += 1
+              if TRIPLE
+                agg[team][triple_event] += 1
+                unique_events[triple_event] += 1
+              end
+
+              # quadruple
+              if last_event_2 && last_team_2
+                prefix = (team == last_team_2 ? 'i' : 'u')
+                quad_event = "#{prefix}_#{last_event_2}_" + triple_event
+                if QUAD
+                  agg[team][quad_event] += 1
+                  unique_events[quad_event] += 1
+                end
+              end
             end
           end
         end
+        last_event_2 = last_event
+        last_team_2 = last_team
         last_event_1 = last_event
         last_team_1 = last_team
         last_event = event
