@@ -18,10 +18,11 @@ GAME_OUTCOMES_PATH = dirname(__file__) + "/../stat/game_outcomes.json"
 
 USE_HASH = False
 HASH_SPACE = 1 << 16
-WEIGHT_GATE = 0
+WEIGHT_GATE = 0       # 0 seems to be best
+NEIGHBORS = 20
 
-# highest accuracy was seen with a value of 2
-KEEP_SV = 5
+# highest accuracy was seen with a value of ~2-4, but also maybe more features -> more SVs
+KEEP_SV = 2
 
 def build_team_index(path):
     team_array = open(path).read().split("\n")
@@ -56,7 +57,7 @@ for line in fileinput.input():
     for tuple_key, count in obj['tuples'].iteritems():
         val = count # TODO weight
         val = max(val - WEIGHT_GATE, 0) # TODO weight
-        val = 1 if val > 0 else 0 # TODO weight
+        #val = 1 if val > 0 else 0 # TODO weight
         vec[get_tuple_key(tuple_key)] = val
     team_features[team_index[team]] = vec
 print team_features.shape
@@ -96,7 +97,8 @@ print "Building games matrix..."
 # For each, store two entries: one with winner first and one with loser first.
 games_matrix = np.empty([len(games * 2), actual_sv * 2]) # TODO concat
 #games_matrix = np.empty([len(games * 2), actual_sv])
-outcomes_vec = np.empty(len(games * 2))
+regress_vec = np.empty(len(games * 2))
+class_vec = np.empty(len(games * 2))
 for (i, game) in enumerate(games):
     w_index, l_index = [i, i + len(games)]
     w_vec = team_feat_dense[team_index[game['winner']]]
@@ -108,31 +110,56 @@ for (i, game) in enumerate(games):
     games_matrix[l_index] = np.concatenate([l_vec, w_vec]) # TODO concat
     #games_matrix[l_index] = l_vec
 
-    outcomes_vec[w_index] = game['score_diff']**1
-    outcomes_vec[l_index] = -1 * (game['score_diff']**1)
+    regress_vec[w_index] = game['score_diff']
+    regress_vec[l_index] = -game['score_diff']
+    class_vec[w_index] = 1.0
+    class_vec[l_index] = -1.0
 print games_matrix.shape
+print
 
 # distance metrics: http://scikit-learn.org/stable/modules/generated/sklearn.neighbors.DistanceMetric.html#sklearn.neighbors.DistanceMetric
 # KNN http://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html#sklearn.neighbors.KNeighborsClassifier
 # http://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsRegressor.html
-print "Classifying...\n"
-games_train, games_test, outcomes_train, outcomes_test = train_test_split(
-        games_matrix, outcomes_vec, test_size=0.95)
+print "Regression test..."
+games_train, games_test, regress_train, regress_test = train_test_split(
+        games_matrix, regress_vec, test_size=0.75)
 
 n = KNeighborsRegressor(
-        n_neighbors=20,         # saw highest accuracy with 20
+        n_neighbors=NEIGHBORS,         # saw highest accuracy with 20
         algorithm='kd_tree',
-        #weights='uniform',
-        weights='distance',
-        metric='minkowski', p=2,
+        weights='uniform',      # saw highest accuracy with uniform
+        #weights='distance',
+        #metric='minkowski', p=2,
         n_jobs = 3, # number of CPU cores (-1 for all)
         )
 
-n.fit(games_train, outcomes_train)
-print "Accuracy training data:", n.score(games_train, outcomes_train)
-print "Accuracy test data:", n.score(games_test, outcomes_test)
+n.fit(games_train, regress_train)
+print "Accuracy training data:", n.score(games_train, regress_train)
+print "Accuracy test data:", n.score(games_test, regress_test)
 print
 
 print "Some predictions:"
 for i in range(0,10):
-    print "  ", n.predict([games_test[i]]), outcomes_test[i]
+    print "  ", n.predict([games_test[i]]), regress_test[i]
+print
+
+print "Classification test..."
+games_train, games_test, class_train, class_test = train_test_split(
+        games_matrix, class_vec, test_size=0.75)
+n = KNeighborsClassifier(
+        n_neighbors=NEIGHBORS,         # saw highest accuracy with 20
+        algorithm='kd_tree',
+        weights='uniform',      # saw highest accuracy with uniform
+        #weights='distance',
+        #metric='minkowski', p=2,
+        n_jobs = 3, # number of CPU cores (-1 for all)
+        )
+
+n.fit(games_train, class_train)
+print "Accuracy training data:", n.score(games_train, class_train)
+print "Accuracy test data:", n.score(games_test, class_test)
+print
+
+print "Some predictions:"
+for i in range(0,10):
+    print "  ", n.predict([games_test[i]]), class_test[i]

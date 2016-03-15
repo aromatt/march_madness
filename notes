@@ -49,6 +49,12 @@ Memory:
   Local box can only ever do up to 20 bit column hash space.
   At 20 bits, can keep up to about 300 SVs. (there's only one per team, anyway)
 
+Higher Accuracy with:
+  Binary weights, normalized with max_abs_scale
+  Longer tuples.
+  Fewer SVs.
+  Uniform KNN weighting
+  ~20 neighbors
 
 # Quick links
 http://espn.go.com/mens-college-basketball/playbyplay?gameId=400818864
