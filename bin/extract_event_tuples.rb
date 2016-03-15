@@ -48,38 +48,66 @@ events = {
 }
 
 agg = Hash.new { |h, team| h[team] = Hash.new { |h, event| h[event] = 0 } }
-
-count = 0
-last_event = nil
-last_team = nil
-last_event_1 = nil
-last_team_1 = nil
 unique_events = Hash.new { |h, event| h[event] = 0 }
 
-ARGF.readlines.each do |line|
-  action, new_score, team, time = line.split("\t")
-  team = team.to_i
-  event, _ = events.find {|name, event| event[:regex] =~ action}
+count = 0
+ARGV.each do |file|
+  teams = {}
+  last_event = nil
+  last_team = nil
+  last_event_1 = nil
+  last_team_1 = nil
 
-  if event
-    agg[team][event] += 1
-    unique_events[event] += 1
-    if last_event && last_team
-      double_event = "#{last_team == team ? 'i' : 'u' }_#{last_event}_i_#{event}"
-      agg[team][double_event] += 1
-      unique_events[double_event] += 1
-      if last_event_1 && last_team_1
-        triple_event = "#{last_team_1 == team ? 'i' : 'u' }_#{last_event_1}_" + double_event
-        agg[team][triple_event] += 1
-        unique_events[triple_event] += 1
+  File.open(file, 'r') do |f|
+    lines = f.readlines
+
+    # Need to determine both teams before iterating over lines.
+    # Skip file unless we have two teams (sometimes they are missing)
+    lines.each do |line|
+      team = line.split("\t")[2].to_i
+      next unless team > 0
+      teams[team] = 1
+      break if teams.keys.count == 2
+    end
+    break if teams.keys.count < 2
+
+    lines.each do |line|
+      action, new_score, acting_team, time = line.split("\t")
+      acting_team = acting_team.to_i
+      next unless acting_team > 0
+      event, _ = events.find {|name, event| event[:regex] =~ action}
+
+      if event
+        teams.keys.each do |team|
+          # single
+          prefix = (team == acting_team ? 'i' : 'u')
+          single_event = "#{prefix}_#{event}"
+          agg[team][single_event] += 1
+          unique_events[single_event] += 1
+
+          # double
+          if last_event && last_team
+            prefix = (team == last_team ? 'i' : 'u')
+            double_event = "#{prefix}_#{last_event}_" + single_event
+            agg[team][double_event] += 1
+            unique_events[double_event] += 1
+
+            # triple
+            if last_event_1 && last_team_1
+              prefix = (team == last_team_1 ? 'i' : 'u')
+              triple_event = "#{prefix}_#{last_event_1}_" + double_event
+              agg[team][triple_event] += 1
+              unique_events[triple_event] += 1
+            end
+          end
+        end
+        last_event_1 = last_event
+        last_team_1 = last_team
+        last_event = event
+        last_team = acting_team
+        count += 1
       end
     end
-    #$stderr.puts count if count % 100_000 == 0
-    last_event_1 = last_event
-    last_team_1 = last_team
-    last_event = event
-    last_team = team
-    count += 1
   end
 end
 
