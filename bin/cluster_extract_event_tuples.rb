@@ -2,7 +2,7 @@
 
 require 'json'
 
-procs = ENV['PROCS'] || 16
+procs = ENV['PROCS'].to_i || 16
 name = ENV['NAME'] || 'noname'
 
 root = File.expand_path('../..', __FILE__)
@@ -28,14 +28,18 @@ $stderr.puts "Merging..."
 
 merged = {}
 totals = Hash.new { |h, k| h[k] = 0 }
-`ls #{exp_dir}/tuples*.json`.split(' ').each_with_index do |file, i|
+`ls #{exp_dir}/tuples_part_*.json`.split(' ').each_with_index do |file, i|
+  puts "#{File.basename(file)}"
   File.open(file).each do |json_line|
-    team, tuples = JSON.load(json_line).values_at("team", "tuples")
-    merged[team] ||= Hash.new { |h, k| h[k] = 0 }
-    merged[team].merge!(tuples) { |k, old, new| old + new }
-    totals.merge!(tuples) { |k, old, new| old + new }
+    begin
+      team, tuples = JSON.load(json_line).values_at("team", "tuples")
+      merged[team] ||= Hash.new { |h, k| h[k] = 0 }
+      merged[team].merge!(tuples) { |k, old, new| old + new }
+      totals.merge!(tuples) { |k, old, new| old + new }
+    rescue JSON::ParserError => e
+      $stderr.puts "JSON parse error"
+    end
   end
-  puts "Merged #{File.basename(file)}"
 end
 
 File.open(File.expand_path('report.txt', exp_dir), 'w') do |f|
@@ -47,5 +51,8 @@ File.open(File.expand_path('report.txt', exp_dir), 'w') do |f|
 end
 
 File.open(File.expand_path('tuples.json', exp_dir), 'w') do |f|
-  f.puts merged.to_json
+  merged.each_pair do |team, tuples|
+    team_tuples = { team: team, tuples: tuples }
+    f.puts team_tuples.to_json
+  end
 end

@@ -19,16 +19,16 @@ require 'json'
 # Use this array to specify tuples you want in your output.
 # 0: current, 1: previous, ...
 TUPLE_SPEC = [
-  [0],
+  #[0],
   [0, 1],
   [0, 1, 2],
   [0, 1, 2, 3],
-  [0, 1, 2, 3, 4],
-  [0, 1, 2, 3, 4, 5],
-  [0, 1, 2, 3, 4, 5, 6],
-  [0, 1, 2, 3, 4, 5, 6, 7],
+  #[0, 1, 2, 3, 4],
+  #[0, 1, 2, 3, 4, 5],
+  #[0, 1, 2, 3, 4, 5, 6],
+  #[0, 1, 2, 3, 4, 5, 6, 7],
 ]
-TIME_BUCKET_MINUTES = 10
+TIME_BUCKET_MINUTES = 2
 
 EVENTS = {
   missed_jumper: {

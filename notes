@@ -35,11 +35,17 @@ DONE - Evaluate by splitting data into lookup table and test data.
   # Collect data:
   # run ./bin scripts 0_*, 1_* and 2_* (2 can take hours because of sleeping in between HTTP queries)
 
-  # Extract event tuples (takes ~1-2 minutes):
-  $ ./bin/extract_event_tuples.rb data/playbyplay*.tsv > 1>stat/tuples.json 2>stat/tuple_stats.txt
+  # Extract event tuples. You can run it in a single process with, capturing stdout (and stderr for
+  # a report)... or...
+  $ ./bin/extract_event_tuples.rb data/playbyplay*.tsv > 1>stat/tuples.json 2>stat/report.txt
+
+  # Or divide and conquer, splitting up the work among $PROCS processes. This will create a directory
+  # named $NAME within stat/, where it will store the final merged output to tuples.json, and the final
+  # report to report.txt
+  $ PROCS=32 NAME=foo ./bin/cluster_extract_event_tuples.rb data/playbyplay*.tsv
 
   # Perform SVD on event tuples matrix
-  cat stat/tuples.json | ./bin/svd.py
+  ./bin/svd.py stat/maybe_some_dir/tuples.json
 
 
 # Observations

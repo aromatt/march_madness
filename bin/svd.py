@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import sys
 from os.path import dirname
 import fileinput
@@ -18,17 +17,18 @@ GAME_OUTCOMES_PATH = dirname(__file__) + "/../stat/game_outcomes.json"
 
 TRAIN_SPLIT = 0.80
 
-USE_HASH = True
-HASH_SPACE = 1 << 21
+USE_HASH = False
+HASH_SPACE = 1 << 22
 
-WEIGHT_GATE = 1            # 0 seems to be best? actually 1 or 2
+WEIGHT_GATE = 0            # 0 seems to be best? actually 1 or 2
 WEIGHT_CEIL = 1000000
 WEIGHT_IGNORE = 10000000
 BINARY_WEIGHT = False      # True seems best
 
-NEIGHBORS = 150             # 20 was best
+NEIGHBORS = 20             # 20 was best
 
-# Highest accuracy was seen with a value of ~2-5, but also maybe more features -> more SVs?
+# Highest accuracy was seen with a value of ~2-5,
+# but also maybe more features -> more SVs?
 KEEP_SV = 4
 
 def build_team_index(path):
@@ -41,7 +41,13 @@ def build_games_map(path):
         h.append(json.loads(line))
     return h
 
-tuple_keys = {}
+def get_num_features(path):
+    fs = {}
+    for line in open(path):
+        for f in json.loads(line).values()[0].keys():
+            fs[f] = 1
+    return len(fs.keys())
+
 def get_tuple_key(key):
     if USE_HASH:
         return hash(key) % HASH_SPACE
@@ -52,15 +58,24 @@ def get_tuple_key(key):
             tuple_keys[key] = len(tuple_keys)
             return tuple_keys[key]
 
+def empty_features_matrix(path):
+    if USE_HASH:
+        return HASH_SPACE, np.empty([len(team_index), HASH_SPACE])
+    else:
+        num_features = get_num_features(tuples_path)
+        return num_features, np.empty([len(team_index), num_features])
+
+tuples_path = sys.argv[1]
 team_index = build_team_index(TEAM_INDEX_PATH)
 games = build_games_map(GAME_OUTCOMES_PATH)
+tuple_keys = {}
 
 print "Building team * features matrix..."
-team_features = np.empty([len(team_index), HASH_SPACE])
-for line in fileinput.input():
+num_features, team_features = empty_features_matrix(tuples_path)
+for line in open(tuples_path):
     obj = json.loads(line)
     team = int(obj['team'])
-    vec = np.zeros(HASH_SPACE)
+    vec = np.zeros(num_features)
     for tuple_key, count in obj['tuples'].iteritems():
         val = count
         val = max(val - WEIGHT_GATE, WEIGHT_CEIL)
@@ -83,18 +98,17 @@ print csc.shape
 print "Computing SVD..."
 ut, s, vt = sparsesvd(csc, KEEP_SV)
 #team_feat_dense = np.dot(np.transpose(ut), np.square(np.diag(s)))
-team_feat_dense = np.dot(np.transpose(ut), np.diag(s))
 #team_feat_dense = np.transpose(ut)
+team_feat_dense = np.dot(np.transpose(ut), np.diag(s))
 print "Dense team feature vectors:", team_feat_dense.shape
 print team_feat_dense
 actual_sv = len(s)
 print "%s singular values, min: %s, max: %s" % (actual_sv, min(s), max(s))
 
-print "Building games matrix..."
 # Each row in games_matrix is a concatenation of the teams' dense feature vectors.
 # For each, store two entries: one with winner first and one with loser first.
-games_matrix = np.empty([len(games * 2), actual_sv * 2]) # TODO concat
-#games_matrix = np.empty([len(games * 2), actual_sv])
+print "Building games matrix..."
+games_matrix = np.empty([len(games * 2), actual_sv * 2])
 regress_vec = np.empty(len(games * 2))
 class_vec = np.empty(len(games * 2))
 for (i, game) in enumerate(games):
@@ -134,8 +148,6 @@ print "Some predictions:"
 for i in range(0,10):
     print "  ", n.predict([games_test[i]]), regress_test[i]
 print
-
-
 
 print "Classification test..."
 games_train, games_test, class_train, class_test = train_test_split(
