@@ -16,20 +16,20 @@ import operator
 TEAM_INDEX_PATH = dirname(__file__) + "/../stat/teams.index"
 GAME_OUTCOMES_PATH = dirname(__file__) + "/../stat/game_outcomes.json"
 
-TRAIN_SPLIT = 0.75
+TRAIN_SPLIT = 0.80
 
 USE_HASH = True
 HASH_SPACE = 1 << 21
 
-WEIGHT_GATE = 0           # 0 seems to be best? actually 1 or 2
+WEIGHT_GATE = 1            # 0 seems to be best? actually 1 or 2
 WEIGHT_CEIL = 1000000
 WEIGHT_IGNORE = 10000000
-BINARY_WEIGHT = True      # True seems best
+BINARY_WEIGHT = False      # True seems best
 
-NEIGHBORS = 20            # 20 was best
+NEIGHBORS = 150             # 20 was best
 
 # Highest accuracy was seen with a value of ~2-5, but also maybe more features -> more SVs?
-KEEP_SV = 5
+KEEP_SV = 4
 
 def build_team_index(path):
     team_array = open(path).read().split("\n")
@@ -118,7 +118,6 @@ print
 print "Regression test..."
 games_train, games_test, regress_train, regress_test = train_test_split(
         games_matrix, regress_vec, test_size=TRAIN_SPLIT)
-
 n = KNeighborsRegressor(
         n_neighbors=NEIGHBORS,         # saw highest accuracy with 20
         algorithm='kd_tree',
@@ -127,16 +126,16 @@ n = KNeighborsRegressor(
         #metric='minkowski', p=2,
         n_jobs = 3, # number of CPU cores (-1 for all)
         )
-
 n.fit(games_train, regress_train)
 print "Accuracy training data:", n.score(games_train, regress_train)
 print "Accuracy test data:", n.score(games_test, regress_test)
 print
-
 print "Some predictions:"
 for i in range(0,10):
     print "  ", n.predict([games_test[i]]), regress_test[i]
 print
+
+
 
 print "Classification test..."
 games_train, games_test, class_train, class_test = train_test_split(
@@ -149,12 +148,10 @@ n = KNeighborsClassifier(
         #metric='minkowski', p=1,
         n_jobs = 3, # number of CPU cores (-1 for all)
         )
-
 n.fit(games_train, class_train)
 print "Accuracy training data:", n.score(games_train, class_train)
 print "Accuracy test data:", n.score(games_test, class_test)
 print
-
 print "Some predictions:"
-for i in range(0,10):
+for i in range(0, 10):
     print "  ", n.predict([games_test[i]]), class_test[i]
