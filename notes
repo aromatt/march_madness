@@ -13,10 +13,10 @@ DONE - Evaluate by splitting data into lookup table and test data.
 # Dependencies
   ruby
   python
-    numpy
-    scipy
-    sparsesvd
-    scikit-learn
+    numpy (use Debian python-numpy)
+    scipy (use Debian python-scipy)
+    scikit-learn (use Debian python-scikits-learn)
+    sparsesvd (use pip)
 
   # NYI
   scikit-cuda (and CUDA)
@@ -27,6 +27,7 @@ DONE - Evaluate by splitting data into lookup table and test data.
 
 # Instructions
 
+  # Install pip
   # Install python deps (use virtualenv to keep it isolated)
 
   $ cd march_madness
