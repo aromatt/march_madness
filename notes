@@ -16,6 +16,7 @@ DONE - Evaluate by splitting data into lookup table and test data.
     numpy (use Debian python-numpy)
     scipy (use Debian python-scipy)
     scikit-learn (use Debian python-scikits-learn)
+    with pip --upgrade sklearn to 0.17.1 for maxabs_scale
     sparsesvd (use pip)
 
   # NYI
