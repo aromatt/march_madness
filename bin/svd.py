@@ -78,7 +78,7 @@ for line in open(tuples_path):
     vec = np.zeros(num_features)
     for tuple_key, count in obj['tuples'].iteritems():
         val = count
-        val = max(val - WEIGHT_GATE, WEIGHT_CEIL)
+        val = min(max(val - WEIGHT_GATE, 0), WEIGHT_CEIL)
         val = 0 if val > WEIGHT_IGNORE else val
         if BINARY_WEIGHT:
             val = 1 if val > 0 else 0
